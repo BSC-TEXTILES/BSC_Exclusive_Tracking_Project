@@ -86,6 +86,10 @@ export async function getSession() {
 
     const enrichedUser = {
       ...user,
+      fullName: user.full_name,
+      employeeCode: user.employee_code,
+      departmentId: user.department_id,
+      roleId: user.role_id,
       role: {
         ...user.role,
         rolePermissions: rolePermissions || [],

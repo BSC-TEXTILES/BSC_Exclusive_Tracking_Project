@@ -1,10 +1,8 @@
 import type { NextConfig } from "next";
-import path from "node:path";
 
 const nextConfig: NextConfig = {
-  turbopack: {
-    root: path.resolve(__dirname, ".."),
-  },
+  output: "standalone",
+  turbopack: {},
   experimental: {
     serverActions: {
       bodySizeLimit: "10mb",
