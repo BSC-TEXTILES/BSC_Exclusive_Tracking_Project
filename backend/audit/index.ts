@@ -1,4 +1,4 @@
-import { getSupabaseServerClient } from '@backend/supabase/client'
+import { getSupabaseServerClient } from '../supabase/client'
 
 export type AuditAction =
   | 'LOGIN'
