@@ -1,4 +1,4 @@
-import prisma from '@/lib/db/prisma'
+import { getSupabaseServerClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth/session'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
@@ -9,9 +9,7 @@ import {
   Building2,
   Layers,
   Shield,
-  CheckCircle2,
   Clock,
-  XCircle,
   AlertTriangle,
   TrendingUp,
   ArrowRight,
@@ -22,7 +20,6 @@ import {
   Settings,
   UserPlus,
   FolderOpen,
-  Eye,
 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -34,110 +31,108 @@ export default async function AdminDashboardPage() {
     redirect('/dashboard')
   }
 
+  const supabase = getSupabaseServerClient()
+
   const today = new Date()
   today.setHours(0, 0, 0, 0)
+  const todayStr = today.toISOString().split('T')[0]
 
   const [
-    totalUsers,
-    activeUsers,
-    inactiveUsers,
-    suspendedUsers,
-    totalDepartments,
-    activeDepartments,
-    totalModules,
-    activeModules,
-    totalCheckpoints,
-    activeCheckpoints,
-    totalRoles,
-    todaySubmissions,
-    todayPending,
-    todayRejected,
-    todayApproved,
-    totalSubmissionsAllTime,
-    approvedAllTime,
-    rejectedAllTime,
-    pendingAllTime,
-    totalEvidence,
-    recentSubmissions,
-    overdueAssignments,
-    recentUsers,
-    departmentStats,
+    totalUsersRes,
+    activeUsersRes,
+    inactiveUsersRes,
+    suspendedUsersRes,
+    totalDepartmentsRes,
+    activeDepartmentsRes,
+    totalModulesRes,
+    totalCheckpointsRes,
+    totalRolesRes,
+    todaySubmissionsRes,
+    todayPendingRes,
+    todayRejectedRes,
+    todayApprovedRes,
+    totalSubmissionsAllTimeRes,
+    approvedAllTimeRes,
+    rejectedAllTimeRes,
+    pendingAllTimeRes,
+    totalEvidenceRes,
+    recentSubmissionsRes,
+    pastAssignmentsRes,
+    completedSubmissionsRes,
+    recentUsersRes,
+    departmentStatsRes,
   ] = await Promise.all([
-    prisma.user.count(),
-    prisma.user.count({ where: { status: 'ACTIVE' } }),
-    prisma.user.count({ where: { status: 'INACTIVE' } }),
-    prisma.user.count({ where: { status: 'SUSPENDED' } }),
-    prisma.department.count(),
-    prisma.department.count({ where: { status: 'ACTIVE' } }),
-    prisma.module.count(),
-    prisma.module.count({ where: { status: 'ACTIVE' } }),
-    prisma.checkpoint.count(),
-    prisma.checkpoint.count({ where: { status: 'ACTIVE' } }),
-    prisma.role.count(),
-    prisma.checkpointSubmission.count({
-      where: {
-        submissionDate: today,
-        status: { in: ['SUBMITTED', 'APPROVED'] },
-      },
-    }),
-    prisma.checkpointAssignment.count({
-      where: {
-        assignedDate: today,
-        status: 'ACTIVE',
-      },
-    }),
-    prisma.checkpointSubmission.count({
-      where: {
-        submissionDate: today,
-        status: 'REJECTED',
-      },
-    }),
-    prisma.checkpointSubmission.count({
-      where: {
-        submissionDate: today,
-        status: 'APPROVED',
-      },
-    }),
-    prisma.checkpointSubmission.count(),
-    prisma.checkpointSubmission.count({ where: { status: 'APPROVED' } }),
-    prisma.checkpointSubmission.count({ where: { status: 'REJECTED' } }),
-    prisma.checkpointSubmission.count({ where: { status: { in: ['SUBMITTED', 'PENDING'] } } }),
-    prisma.evidenceFile.count(),
-    prisma.checkpointSubmission.findMany({
-      where: {
-        submissionDate: today,
-      },
-      include: {
-        user: { select: { fullName: true, employeeCode: true } },
-        checkpoint: {
-          include: { module: { select: { name: true } } },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 8,
-    }),
-    prisma.checkpointAssignment.count({
-      where: {
-        assignedDate: { lt: today },
-        status: 'ACTIVE',
-        submissions: { none: { status: { in: ['SUBMITTED', 'APPROVED'] } } },
-      },
-    }),
-    prisma.user.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 5,
-      include: { role: true, department: true },
-    }),
-    prisma.department.findMany({
-      where: { status: 'ACTIVE' },
-      include: {
-        users: { select: { id: true } },
-        modules: {
-          select: { id: true, checkpoints: { select: { id: true } } },
-        },
-      },
-    }),
+    supabase.from('users').select('*', { count: 'exact', head: true }),
+    supabase.from('users').select('*', { count: 'exact', head: true }).eq('status', 'ACTIVE'),
+    supabase.from('users').select('*', { count: 'exact', head: true }).eq('status', 'INACTIVE'),
+    supabase.from('users').select('*', { count: 'exact', head: true }).eq('status', 'SUSPENDED'),
+    supabase.from('departments').select('*', { count: 'exact', head: true }),
+    supabase.from('departments').select('*', { count: 'exact', head: true }).eq('status', 'ACTIVE'),
+    supabase.from('modules').select('*', { count: 'exact', head: true }),
+    supabase.from('checkpoints').select('*', { count: 'exact', head: true }),
+    supabase.from('roles').select('*', { count: 'exact', head: true }),
+    supabase.from('checkpoint_submissions').select('*', { count: 'exact', head: true }).eq('submission_date', todayStr).in('status', ['SUBMITTED', 'APPROVED']),
+    supabase.from('checkpoint_assignments').select('*', { count: 'exact', head: true }).eq('assigned_date', todayStr).eq('status', 'ACTIVE'),
+    supabase.from('checkpoint_submissions').select('*', { count: 'exact', head: true }).eq('submission_date', todayStr).eq('status', 'REJECTED'),
+    supabase.from('checkpoint_submissions').select('*', { count: 'exact', head: true }).eq('submission_date', todayStr).eq('status', 'APPROVED'),
+    supabase.from('checkpoint_submissions').select('*', { count: 'exact', head: true }),
+    supabase.from('checkpoint_submissions').select('*', { count: 'exact', head: true }).eq('status', 'APPROVED'),
+    supabase.from('checkpoint_submissions').select('*', { count: 'exact', head: true }).eq('status', 'REJECTED'),
+    supabase.from('checkpoint_submissions').select('*', { count: 'exact', head: true }).in('status', ['SUBMITTED', 'PENDING']),
+    supabase.from('evidence_files').select('*', { count: 'exact', head: true }),
+    supabase.from('checkpoint_submissions')
+      .select('*, user:users(full_name, employee_code), checkpoint:checkpoints(title, module:modules(name))')
+      .eq('submission_date', todayStr)
+      .order('created_at', { ascending: false })
+      .limit(8),
+    supabase.from('checkpoint_assignments').select('id').lt('assigned_date', todayStr).eq('status', 'ACTIVE'),
+    supabase.from('checkpoint_submissions').select('assignment_id').in('status', ['SUBMITTED', 'APPROVED']),
+    supabase.from('users').select('*, role:roles(*), department:departments(*)').order('created_at', { ascending: false }).limit(5),
+    supabase.from('departments').select('*, users:users(id), modules:modules(id, checkpoints:checkpoints(id))').eq('status', 'ACTIVE').order('name', { ascending: true }),
   ])
+
+  const totalUsers = totalUsersRes.count || 0
+  const activeUsers = activeUsersRes.count || 0
+  const inactiveUsers = inactiveUsersRes.count || 0
+  const suspendedUsers = suspendedUsersRes.count || 0
+  const totalDepartments = totalDepartmentsRes.count || 0
+  const activeDepartments = activeDepartmentsRes.count || 0
+  const totalModules = totalModulesRes.count || 0
+  const totalCheckpoints = totalCheckpointsRes.count || 0
+  const totalRoles = totalRolesRes.count || 0
+  const todaySubmissions = todaySubmissionsRes.count || 0
+  const todayPending = todayPendingRes.count || 0
+  const todayRejected = todayRejectedRes.count || 0
+  const todayApproved = todayApprovedRes.count || 0
+  const totalSubmissionsAllTime = totalSubmissionsAllTimeRes.count || 0
+  const approvedAllTime = approvedAllTimeRes.count || 0
+  const rejectedAllTime = rejectedAllTimeRes.count || 0
+  const pendingAllTime = pendingAllTimeRes.count || 0
+  const totalEvidence = totalEvidenceRes.count || 0
+
+  const recentSubmissions = (recentSubmissionsRes.data || []).map((s: any) => ({
+    ...s,
+    user: { fullName: s.user?.full_name, employeeCode: s.user?.employee_code },
+  }))
+
+  const completedAssignmentIds = new Set(
+    (completedSubmissionsRes.data || []).map((s: any) => s.assignment_id).filter(Boolean) as string[]
+  )
+  const overdueAssignments = (pastAssignmentsRes.data || []).filter(
+    (a: any) => !completedAssignmentIds.has(a.id)
+  ).length
+
+  const recentUsers = (recentUsersRes.data || []).map((u: any) => ({
+    ...u,
+    fullName: u.full_name,
+    employeeCode: u.employee_code,
+    departmentId: u.department_id,
+    roleId: u.role_id,
+    lastLoginAt: u.last_login_at,
+    createdAt: u.created_at,
+  }))
+
+  const departmentStats = departmentStatsRes.data || []
 
   const completionPercent = todayPending > 0
     ? Math.round((todaySubmissions / todayPending) * 100)
@@ -375,15 +370,15 @@ export default async function AdminDashboardPage() {
             {departmentStats.length === 0 ? (
               <div className="px-5 py-8 text-center text-xs text-text-muted">No departments configured</div>
             ) : (
-              departmentStats.map(dept => (
+              departmentStats.map((dept: any) => (
                 <div key={dept.id} className="px-5 py-3 hover:bg-background transition-colors">
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-sm font-medium text-text">{dept.name}</span>
-                    <span className="text-xs text-text-muted">{dept.users.length} user{dept.users.length !== 1 ? 's' : ''}</span>
+                    <span className="text-xs text-text-muted">{dept.users?.length || 0} user{(dept.users?.length || 0) !== 1 ? 's' : ''}</span>
                   </div>
                   <div className="flex items-center gap-4 text-xs text-text-muted">
-                    <span>{dept.modules.length} module{dept.modules.length !== 1 ? 's' : ''}</span>
-                    <span>{dept.modules.reduce((acc, m) => acc + m.checkpoints.length, 0)} checkpoint{dept.modules.reduce((acc, m) => acc + m.checkpoints.length, 0) !== 1 ? 's' : ''}</span>
+                    <span>{dept.modules?.length || 0} module{(dept.modules?.length || 0) !== 1 ? 's' : ''}</span>
+                    <span>{(dept.modules || []).reduce((acc: number, m: any) => acc + (m.checkpoints?.length || 0), 0)} checkpoint{(dept.modules || []).reduce((acc: number, m: any) => acc + (m.checkpoints?.length || 0), 0) !== 1 ? 's' : ''}</span>
                   </div>
                 </div>
               ))
@@ -406,11 +401,11 @@ export default async function AdminDashboardPage() {
             {recentUsers.length === 0 ? (
               <div className="px-5 py-8 text-center text-xs text-text-muted">No users found</div>
             ) : (
-              recentUsers.map(u => (
+              recentUsers.map((u: any) => (
                 <div key={u.id} className="px-5 py-3 hover:bg-background transition-colors flex items-center justify-between">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-8 h-8 bg-primary-light text-primary border border-primary/20 flex items-center justify-center flex-shrink-0 text-xs font-bold">
-                      {u.fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                      {u.fullName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-text truncate">{u.fullName}</p>
@@ -451,7 +446,7 @@ export default async function AdminDashboardPage() {
             {recentSubmissions.length === 0 ? (
               <div className="px-5 py-8 text-center text-xs text-text-muted">No activity today yet</div>
             ) : (
-              recentSubmissions.map(sub => (
+              recentSubmissions.map((sub: any) => (
                 <div key={sub.id} className="px-5 py-3 hover:bg-background transition-colors">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
@@ -460,11 +455,11 @@ export default async function AdminDashboardPage() {
                       </div>
                       <div className="flex items-center gap-2 text-xs text-text-muted">
                         <span>{sub.checkpoint.module.name}</span>
-                        <span>·</span>
+                        <span>&middot;</span>
                         <span>{sub.user.fullName}</span>
                         {sub.user.employeeCode && (
                           <>
-                            <span>·</span>
+                            <span>&middot;</span>
                             <span>{sub.user.employeeCode}</span>
                           </>
                         )}

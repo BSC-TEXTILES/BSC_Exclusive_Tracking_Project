@@ -7,37 +7,30 @@ import {
   LayoutDashboard,
   Users,
   Building2,
-  Layers,
+  FolderOpen,
   ClipboardCheck,
-  CalendarCheck,
-  FileCheck,
-  FileImage,
   FileBarChart,
   ScrollText,
-  Settings,
-  Shield,
+  User,
   ChevronLeft,
   Menu,
   X,
+  ShieldCheck,
 } from 'lucide-react'
 import AppHeader from '@/components/layout/app-header'
 
-const adminNavItems = [
-  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-  { href: '/admin/users', label: 'Users', icon: Users },
-  { href: '/admin/roles', label: 'Roles', icon: Shield },
-  { href: '/admin/departments', label: 'Departments', icon: Building2 },
-  { href: '/admin/modules', label: 'Modules', icon: Layers },
-  { href: '/admin/checkpoints', label: 'Checkpoints', icon: ClipboardCheck },
-  { href: '/admin/assignments', label: 'Assignments', icon: CalendarCheck },
-  { href: '/admin/submissions', label: 'Submissions', icon: FileCheck },
-  { href: '/admin/evidence', label: 'Evidence', icon: FileImage },
-  { href: '/admin/reports', label: 'Reports', icon: FileBarChart },
-  { href: '/admin/audit-logs', label: 'Audit Logs', icon: ScrollText },
-  { href: '/admin/settings', label: 'Settings', icon: Settings },
+const supervisorNavItems = [
+  { href: '/supervisor', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+  { href: '/supervisor/employees', label: 'My Team', icon: Users },
+  { href: '/supervisor/departments', label: 'Departments', icon: Building2 },
+  { href: '/supervisor/projects', label: 'Projects', icon: FolderOpen },
+  { href: '/supervisor/approvals', label: 'Approvals', icon: ClipboardCheck },
+  { href: '/supervisor/reports', label: 'Reports', icon: FileBarChart },
+  { href: '/supervisor/activity', label: 'Activity', icon: ScrollText },
+  { href: '/supervisor/profile', label: 'Profile', icon: User },
 ]
 
-function AdminNavContent({ onNavigate }: { onNavigate: () => void }) {
+function SupervisorNavContent({ onNavigate }: { onNavigate: () => void }) {
   const pathname = usePathname()
 
   const isActive = (href: string, exact?: boolean) => {
@@ -58,13 +51,13 @@ function AdminNavContent({ onNavigate }: { onNavigate: () => void }) {
         </Link>
 
         <div className="flex items-center gap-1.5 text-primary font-semibold text-xs uppercase tracking-wider px-1 pt-0.5">
-          <Shield className="w-3.5 h-3.5" />
-          Admin Panel
+          <ShieldCheck className="w-3.5 h-3.5" />
+          Supervisor Panel
         </div>
       </div>
 
       <nav className="flex-1 px-1.5 space-y-0.5">
-        {adminNavItems.map(item => (
+        {supervisorNavItems.map(item => (
           <Link
             key={item.href}
             href={item.href}
@@ -84,7 +77,7 @@ function AdminNavContent({ onNavigate }: { onNavigate: () => void }) {
   )
 }
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function SupervisorLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const handleNavigate = () => setMobileOpen(false)
@@ -98,13 +91,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <button
           onClick={() => setMobileOpen(true)}
           className="p-1.5 hover:bg-surface-alt rounded transition"
-          aria-label="Open admin menu"
+          aria-label="Open supervisor menu"
         >
           <Menu className="w-5 h-5 text-text" />
         </button>
         <span className="text-xs font-semibold text-primary uppercase tracking-wider flex items-center gap-1.5">
-          <Shield className="w-3.5 h-3.5" />
-          Admin Panel
+          <ShieldCheck className="w-3.5 h-3.5" />
+          Supervisor Panel
         </span>
       </div>
 
@@ -124,24 +117,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       >
         <div className="flex items-center justify-between px-3 mb-2">
           <span className="text-xs font-semibold text-primary uppercase tracking-wider flex items-center gap-1.5">
-            <Shield className="w-3.5 h-3.5" />
-            Admin Panel
+            <ShieldCheck className="w-3.5 h-3.5" />
+            Supervisor Panel
           </span>
           <button
             onClick={() => setMobileOpen(false)}
             className="p-1 hover:bg-surface-alt rounded transition"
-            aria-label="Close admin menu"
+            aria-label="Close supervisor menu"
           >
             <X className="w-4 h-4 text-text-muted" />
           </button>
         </div>
-        <AdminNavContent onNavigate={handleNavigate} />
+        <SupervisorNavContent onNavigate={handleNavigate} />
       </aside>
 
       <div className="flex flex-1">
         {/* Desktop sidebar */}
         <aside className="hidden lg:flex flex-col w-56 bg-surface border-r border-border py-2.5 flex-shrink-0">
-          <AdminNavContent onNavigate={handleNavigate} />
+          <SupervisorNavContent onNavigate={handleNavigate} />
         </aside>
 
         <main className="flex-1 bg-background overflow-auto">

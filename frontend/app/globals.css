@@ -45,6 +45,10 @@
   --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
+:root {
+  --font-inter: 'Inter';
+}
+
 body {
   background: var(--color-background);
   color: var(--color-foreground);

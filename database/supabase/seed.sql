@@ -206,12 +206,12 @@ ON CONFLICT (id) DO NOTHING;
 -- ADMIN USER (password: Admin@123456 - bcrypt hash)
 -- ============================================================
 INSERT INTO users (id, employee_code, full_name, email, phone, username, password_hash, role_id, department_id, status, must_change_password, created_at, updated_at) VALUES
-  ('user_admin', 'EMP001', 'System Administrator', 'admin@bscexclusive.com', '+91 98765 43210', 'admin', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'role_admin', 'dept_ops', 'ACTIVE', false, NOW(), NOW())
+  ('user_admin', 'EMP001', 'System Administrator', 'admin@bscexclusive.com', '+91 98765 43210', 'admin', '$2b$12$s646E1RCaU02g7BBx8jKt.8KcehP2mCmCQUmZxlQcL0hdWl.RMXGq', 'role_admin', 'dept_ops', 'ACTIVE', false, NOW(), NOW())
 ON CONFLICT (username) DO NOTHING;
 
--- Demo user
+-- Demo user (password: Admin@123456)
 INSERT INTO users (id, employee_code, full_name, email, phone, username, password_hash, role_id, department_id, status, must_change_password, created_at, updated_at) VALUES
-  ('user_demo', 'EMP002', 'John Doe', 'john.doe@bscexclusive.com', '+91 98765 43211', 'john.doe', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'role_user', 'dept_ops', 'ACTIVE', false, NOW(), NOW())
+  ('user_demo', 'EMP002', 'John Doe', 'john.doe@bscexclusive.com', '+91 98765 43211', 'john.doe', '$2b$12$s646E1RCaU02g7BBx8jKt.8KcehP2mCmCQUmZxlQcL0hdWl.RMXGq', 'role_user', 'dept_ops', 'ACTIVE', false, NOW(), NOW())
 ON CONFLICT (username) DO NOTHING;
 
 -- ============================================================
