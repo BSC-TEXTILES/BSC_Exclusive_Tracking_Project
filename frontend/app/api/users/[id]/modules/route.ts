@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseServerClient } from '@/lib/supabase/client'
 import { getCurrentUser, requireAdmin } from '@/lib/auth/session'
 import { createAuditLog } from '@/lib/audit'
+import { safeJson } from '@/lib/utils/parse'
+import { getLocalDateString } from '@/lib/utils/date'
 
 export async function GET(
   request: NextRequest,
@@ -93,7 +95,10 @@ export async function POST(
     const admin = await requireAdmin()
     const { id } = await params
     const supabase = getSupabaseServerClient()
-    const body = await request.json()
+    const body = await safeJson(request)
+    if (body === null) {
+      return NextResponse.json({ success: false, message: 'Invalid JSON body' }, { status: 400 })
+    }
 
     const { data: user } = await supabase
       .from('users')
@@ -114,9 +119,7 @@ export async function POST(
       )
     }
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const todayStr = today.toISOString().split('T')[0]
+    const todayStr = getLocalDateString()
 
     let createdCount = 0
 
@@ -145,12 +148,16 @@ export async function POST(
           .limit(1)
 
         if (!existing || existing.length === 0) {
-          await supabase.from('checkpoint_assignments').insert({
+          const { error: insertError } = await supabase.from('checkpoint_assignments').insert({
             checkpoint_id: checkpoint.id,
             user_id: id,
             assigned_date: todayStr,
             frequency: 'DAILY',
           })
+          if (insertError) {
+            console.error('User modules POST insert error:', insertError)
+            return NextResponse.json({ success: false, message: 'Failed to assign modules' }, { status: 500 })
+          }
           createdCount++
         }
       }
@@ -186,7 +193,10 @@ export async function PUT(
     const admin = await requireAdmin()
     const { id } = await params
     const supabase = getSupabaseServerClient()
-    const body = await request.json()
+    const body = await safeJson(request)
+    if (body === null) {
+      return NextResponse.json({ success: false, message: 'Invalid JSON body' }, { status: 400 })
+    }
 
     const { data: user } = await supabase
       .from('users')
@@ -207,9 +217,7 @@ export async function PUT(
       )
     }
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const todayStr = today.toISOString().split('T')[0]
+    const todayStr = getLocalDateString()
 
     const { data: allCheckpoints } = await supabase
       .from('checkpoints')
@@ -252,12 +260,16 @@ export async function PUT(
           .limit(1)
 
         if (!existing || existing.length === 0) {
-          await supabase.from('checkpoint_assignments').insert({
+          const { error: insertError } = await supabase.from('checkpoint_assignments').insert({
             checkpoint_id: checkpoint.id,
             user_id: id,
             assigned_date: todayStr,
             frequency: 'DAILY',
           })
+          if (insertError) {
+            console.error('User modules PUT insert error:', insertError)
+            return NextResponse.json({ success: false, message: 'Failed to update module assignments' }, { status: 500 })
+          }
           createdCount++
         }
       }

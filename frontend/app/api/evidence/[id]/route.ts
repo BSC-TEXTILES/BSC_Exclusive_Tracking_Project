@@ -27,7 +27,7 @@ export async function GET(
       return NextResponse.json({ success: false, message: 'Not found' }, { status: 404 })
     }
 
-    const filePath = path.resolve(evidence.storage_path.replace(/^\//, ''))
+    const filePath = path.resolve(process.env.UPLOAD_DIR || './uploads', evidence.stored_name)
     const fileBuffer = await readFile(filePath)
 
     return new NextResponse(fileBuffer, {
@@ -78,13 +78,18 @@ export async function DELETE(
     }
 
     try {
-      const filePath = path.resolve(evidence.storage_path.replace(/^\//, ''))
+      const filePath = path.resolve(process.env.UPLOAD_DIR || './uploads', evidence.stored_name)
       await unlink(filePath)
     } catch {
       // File might not exist, continue
     }
 
-    await supabase.from('evidence_files').delete().eq('id', id)
+    const { error: deleteError } = await supabase.from('evidence_files').delete().eq('id', id)
+
+    if (deleteError) {
+      console.error('Delete evidence error:', deleteError)
+      return NextResponse.json({ success: false, message: 'Failed to delete' }, { status: 500 })
+    }
 
     return NextResponse.json({ success: true, message: 'Evidence deleted' })
   } catch (error) {

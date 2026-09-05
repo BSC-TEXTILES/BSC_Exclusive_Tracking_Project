@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/auth/session'
 import { hashPassword } from '@/lib/auth/password'
 import { createAuditLog } from '@/lib/audit'
 import { createUserSchema } from '@/lib/validations/schemas'
+import { safeJson } from '@/lib/utils/parse'
 
 // GET all users (admin only)
 export async function GET(request: NextRequest) {
@@ -24,7 +25,8 @@ export async function GET(request: NextRequest) {
       .select('*, role:roles(id, name), department:departments(id, name)', { count: 'exact' })
 
     if (search) {
-      query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,employee_code.ilike.%${search}%,username.ilike.%${search}%`)
+      const safeSearch = (search || '').replace(/[,()%*.']/g, '')
+      query = query.or(`full_name.ilike.%${safeSearch}%,email.ilike.%${safeSearch}%,employee_code.ilike.%${safeSearch}%,username.ilike.%${safeSearch}%`)
     }
 
     if (status) query = query.eq('status', status)
@@ -82,7 +84,10 @@ export async function POST(request: NextRequest) {
   try {
     const admin = await requireAdmin()
     const supabase = getSupabaseServerClient()
-    const body = await request.json()
+    const body = await safeJson(request)
+    if (body === null) {
+      return NextResponse.json({ success: false, message: 'Invalid JSON body' }, { status: 400 })
+    }
 
     const parsed = createUserSchema.safeParse(body)
     if (!parsed.success) {
@@ -93,12 +98,15 @@ export async function POST(request: NextRequest) {
     }
 
     const data = parsed.data
+    const safeEmail = (data.email || '').replace(/[,()%*.']/g, '')
+    const safeUsername = (data.username || '').replace(/[,()%*.']/g, '')
+    const safeEmployeeCode = (data.employeeCode || '').replace(/[,()%*.']/g, '')
 
     // Check for duplicate email/username/employeeCode
     const { data: existing } = await supabase
       .from('users')
       .select('id, email, username, employee_code')
-      .or(`email.eq.${data.email},username.eq.${data.username},employee_code.eq.${data.employeeCode}`)
+      .or(`email.eq.${safeEmail},username.eq.${safeUsername},employee_code.eq.${safeEmployeeCode}`)
       .limit(1)
       .single()
 

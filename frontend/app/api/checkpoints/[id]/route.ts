@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseServerClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth/session'
+import { createAuditLog } from '@/lib/audit'
+import { safeJson } from '@/lib/utils/parse'
+import { getLocalDateString } from '@/lib/utils/date'
 
 export async function GET(
   request: NextRequest,
@@ -25,9 +28,7 @@ export async function GET(
       return NextResponse.json({ success: false, message: 'Checkpoint not found' }, { status: 404 })
     }
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const todayStr = today.toISOString().split('T')[0]
+    const todayStr = getLocalDateString()
 
     const { data: submissions } = await supabase
       .from('checkpoint_submissions')
@@ -91,11 +92,12 @@ export async function PATCH(
 
     const { id } = await params
     const supabase = getSupabaseServerClient()
-    const body = await request.json()
+    const body = (await safeJson(request)) as Record<string, any> | null
+    if (body === null) {
+      return NextResponse.json({ success: false, message: 'Invalid JSON body' }, { status: 400 })
+    }
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const todayStr = today.toISOString().split('T')[0]
+    const todayStr = getLocalDateString()
 
     const { data: existingSubmissions } = await supabase
       .from('checkpoint_submissions')
@@ -200,9 +202,7 @@ export async function POST(
     const { id } = await params
     const supabase = getSupabaseServerClient()
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const todayStr = today.toISOString().split('T')[0]
+    const todayStr = getLocalDateString()
 
     const { data: checkpoint } = await supabase
       .from('checkpoints')
@@ -267,7 +267,7 @@ export async function POST(
       )
     }
 
-    await supabase
+    const { error: submitError } = await supabase
       .from('checkpoint_submissions')
       .update({
         status: 'SUBMITTED',
@@ -275,12 +275,17 @@ export async function POST(
       })
       .eq('id', submission.id)
 
-    await supabase.from('audit_logs').insert({
-      user_id: user.id,
+    if (submitError) {
+      console.error('Submit checkpoint update error:', submitError)
+      return NextResponse.json({ success: false, message: 'Failed to submit' }, { status: 500 })
+    }
+
+    await createAuditLog({
+      userId: user.id,
       action: 'CHECKPOINT_SUBMITTED',
-      entity_type: 'checkpoint_submission',
-      entity_id: submission.id,
-      new_values: {
+      entityType: 'checkpoint_submission',
+      entityId: submission.id,
+      newValues: {
         checkpointId: id,
         compliance: submission.answer?.compliance_status,
         accuracy: submission.answer?.accuracy_status,

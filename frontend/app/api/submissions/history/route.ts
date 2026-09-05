@@ -37,7 +37,23 @@ export async function GET(request: NextRequest) {
     }
 
     if (moduleId) {
-      query = query.eq('checkpoint.module_id', moduleId)
+      const { data: cpIds } = await supabase.from('checkpoints').select('id').eq('module_id', moduleId)
+      const ids = (cpIds ?? []).map((c: any) => c.id)
+      if (ids.length === 0) {
+        return NextResponse.json({
+          success: true,
+          data: {
+            submissions: [],
+            pagination: {
+              page,
+              limit,
+              total: 0,
+              totalPages: 0,
+            },
+          },
+        })
+      }
+      query = query.in('checkpoint_id', ids)
     }
     if (status) {
       query = query.eq('status', status)

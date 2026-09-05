@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseServerClient } from '@/lib/supabase/client'
 import { requireAdmin } from '@/lib/auth/session'
+import { getLocalDateString } from '@/lib/utils/date'
 
 export async function GET() {
   try {
@@ -8,13 +9,7 @@ export async function GET() {
 
     const supabase = await getSupabaseServerClient()
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const tomorrow = new Date(today)
-    tomorrow.setDate(tomorrow.getDate() + 1)
-
-    const todayStr = today.toISOString()
-    const tomorrowStr = tomorrow.toISOString()
+    const todayStr = getLocalDateString()
 
     const [
       totalUsersRes,
@@ -36,7 +31,7 @@ export async function GET() {
       supabase.from('modules').select('*', { count: 'exact', head: true }).eq('status', 'ACTIVE'),
       supabase.from('checkpoints').select('*', { count: 'exact', head: true }),
       supabase.from('checkpoints').select('*', { count: 'exact', head: true }).eq('status', 'ACTIVE'),
-      supabase.from('checkpoint_submissions').select('*', { count: 'exact', head: true }).gte('submission_date', todayStr).lt('submission_date', tomorrowStr),
+      supabase.from('checkpoint_submissions').select('*', { count: 'exact', head: true }).eq('submission_date', todayStr),
       supabase.from('checkpoint_submissions').select('*', { count: 'exact', head: true }),
       supabase.from('checkpoint_submissions').select('*', { count: 'exact', head: true }).eq('status', 'APPROVED'),
       supabase.from('checkpoint_submissions').select('*', { count: 'exact', head: true }).eq('status', 'REJECTED'),

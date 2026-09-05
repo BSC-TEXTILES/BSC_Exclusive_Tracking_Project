@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseServerClient } from '@/lib/supabase/client'
 import { requireAdmin } from '@/lib/auth/session'
+import { getLocalDayBounds } from '@/lib/utils/date'
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,8 +30,14 @@ export async function GET(request: NextRequest) {
     if (action) query = query.eq('action', action)
     if (entityType) query = query.eq('entity_type', entityType)
     if (userId) query = query.eq('user_id', userId)
-    if (dateFrom) query = query.gte('created_at', dateFrom)
-    if (dateTo) query = query.lte('created_at', dateTo + 'T23:59:59.999Z')
+    if (dateFrom) {
+      const { dayStart } = getLocalDayBounds(new Date(dateFrom))
+      query = query.gte('created_at', dayStart)
+    }
+    if (dateTo) {
+      const { dayEnd } = getLocalDayBounds(new Date(dateTo))
+      query = query.lte('created_at', dayEnd)
+    }
 
     const { data: logs, count } = await query
 

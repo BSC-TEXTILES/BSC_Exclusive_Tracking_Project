@@ -4,6 +4,8 @@ import path from 'path'
 import { v4 as uuidv4 } from 'uuid'
 import { getSupabaseServerClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth/session'
+import { safeFormData } from '@/lib/utils/parse'
+import { getLocalDateString } from '@/lib/utils/date'
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const MAX_SIZE = parseInt(process.env.MAX_FILE_SIZE_MB || '10') * 1024 * 1024
@@ -16,7 +18,10 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = getSupabaseServerClient()
-    const formData = await request.formData()
+    const formData = await safeFormData(request)
+    if (formData === null) {
+      return NextResponse.json({ success: false, message: 'Invalid form data' }, { status: 400 })
+    }
     const file = formData.get('file') as File | null
     const checkpointId = formData.get('checkpointId') as string
 
@@ -38,9 +43,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const todayStr = today.toISOString().split('T')[0]
+    const todayStr = getLocalDateString()
 
     const { data: existingSubmissions } = await supabase
       .from('checkpoint_submissions')
@@ -95,7 +98,7 @@ export async function POST(request: NextRequest) {
 
     const storagePath = `/uploads/${todayStr}/${storedName}`
 
-    const { data: evidence } = await supabase
+    const { data: evidence, error: evidenceError } = await supabase
       .from('evidence_files')
       .insert({
         submission_id: submissionId,
@@ -108,6 +111,11 @@ export async function POST(request: NextRequest) {
       })
       .select()
       .single()
+
+    if (evidenceError || !evidence) {
+      console.error('Evidence record save error:', evidenceError)
+      return NextResponse.json({ success: false, message: 'Failed to save evidence record' }, { status: 500 })
+    }
 
     return NextResponse.json({
       success: true,

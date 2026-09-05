@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseServerClient } from '@/lib/supabase/client'
 import { requireAdmin } from '@/lib/auth/session'
+import { safeJson } from '@/lib/utils/parse'
 
 export async function GET(request: NextRequest) {
   try {
@@ -112,7 +113,10 @@ export async function POST(request: NextRequest) {
 
     const supabase = await getSupabaseServerClient()
 
-    const body = await request.json()
+    const body = await safeJson(request)
+    if (body === null) {
+      return NextResponse.json({ success: false, message: 'Invalid JSON body' }, { status: 400 })
+    }
     const { type, dateFrom, dateTo, moduleId, departmentId, userId } = body as {
       type: string
       dateFrom?: string

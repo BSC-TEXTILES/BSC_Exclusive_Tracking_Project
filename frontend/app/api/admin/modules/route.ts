@@ -3,6 +3,7 @@ import { getSupabaseServerClient } from '@/lib/supabase/client'
 import { getCurrentUser, requireAdmin } from '@/lib/auth/session'
 import { createAuditLog } from '@/lib/audit'
 import { moduleSchema } from '@/lib/validations/schemas'
+import { safeJson } from '@/lib/utils/parse'
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,7 +29,8 @@ export async function GET(request: NextRequest) {
 
     if (departmentId) query = query.eq('department_id', departmentId)
     if (search) {
-      query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%`)
+      const safeSearch = (search || '').replace(/[,()%*.']/g, '')
+      query = query.or(`name.ilike.%${safeSearch}%,description.ilike.%${safeSearch}%`)
     }
 
     const { data: modules, error } = await query.order('display_order', { ascending: true })
@@ -62,7 +64,10 @@ export async function POST(request: NextRequest) {
   try {
     const admin = await requireAdmin()
     const supabase = getSupabaseServerClient()
-    const body = await request.json()
+    const body = await safeJson(request)
+    if (body === null) {
+      return NextResponse.json({ success: false, message: 'Invalid JSON body' }, { status: 400 })
+    }
 
     const parsed = moduleSchema.safeParse(body)
     if (!parsed.success) {
@@ -73,11 +78,13 @@ export async function POST(request: NextRequest) {
     }
 
     const data = parsed.data
+    const safeSlug = (data.slug || '').replace(/[,()%*.']/g, '')
+    const safeName = (data.name || '').replace(/[,()%*.']/g, '')
 
     const { data: existing } = await supabase
       .from('modules')
       .select('id, slug, name')
-      .or(`slug.eq.${data.slug},name.eq.${data.name}`)
+      .or(`slug.eq.${safeSlug},name.eq.${safeName}`)
       .limit(1)
       .single()
 

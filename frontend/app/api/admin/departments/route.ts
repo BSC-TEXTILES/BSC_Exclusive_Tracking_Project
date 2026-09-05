@@ -3,6 +3,7 @@ import { getSupabaseServerClient } from '@/lib/supabase/client'
 import { requireAdmin } from '@/lib/auth/session'
 import { createAuditLog } from '@/lib/audit'
 import { departmentSchema } from '@/lib/validations/schemas'
+import { safeJson } from '@/lib/utils/parse'
 
 export async function GET() {
   try {
@@ -44,7 +45,10 @@ export async function POST(request: NextRequest) {
   try {
     const admin = await requireAdmin()
     const supabase = getSupabaseServerClient()
-    const body = await request.json()
+    const body = await safeJson(request)
+    if (body === null) {
+      return NextResponse.json({ success: false, message: 'Invalid JSON body' }, { status: 400 })
+    }
 
     const parsed = departmentSchema.safeParse(body)
     if (!parsed.success) {
@@ -55,11 +59,13 @@ export async function POST(request: NextRequest) {
     }
 
     const data = parsed.data
+    const safeName = (data.name || '').replace(/[,()%*.']/g, '')
+    const safeCode = (data.code || '').replace(/[,()%*.']/g, '')
 
     const { data: existing } = await supabase
       .from('departments')
       .select('id, name, code')
-      .or(`name.eq.${data.name},code.eq.${data.code}`)
+      .or(`name.eq.${safeName},code.eq.${safeCode}`)
       .limit(1)
       .single()
 

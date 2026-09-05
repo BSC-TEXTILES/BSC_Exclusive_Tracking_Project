@@ -46,12 +46,44 @@ export async function GET(request: NextRequest) {
       query = query.lte('submission_date', dateTo)
     }
 
+    let checkpointIds: string[] = []
+    let hasCheckpointFilter = false
+
     if (moduleSlug) {
-      query = query.eq('checkpoints.module.slug', moduleSlug)
+      const { data: modules } = await supabase.from('modules').select('id').eq('slug', moduleSlug)
+      const moduleIds = (modules ?? []).map((m: any) => m.id)
+      const { data: cpIds } = moduleIds.length > 0
+        ? await supabase.from('checkpoints').select('id').in('module_id', moduleIds)
+        : { data: [] }
+      const ids = (cpIds ?? []).map((c: any) => c.id)
+      checkpointIds = ids
+      hasCheckpointFilter = true
     }
 
     if (search) {
-      query = query.ilike('checkpoints.title', `%${search}%`)
+      const { data: cpIds } = await supabase.from('checkpoints').select('id').ilike('title', `%${search}%`)
+      const ids = (cpIds ?? []).map((c: any) => c.id)
+      checkpointIds = hasCheckpointFilter ? checkpointIds.filter((id) => ids.includes(id)) : ids
+      hasCheckpointFilter = true
+    }
+
+    if (hasCheckpointFilter && checkpointIds.length === 0) {
+      return NextResponse.json({
+        success: true,
+        data: {
+          submissions: [],
+          pagination: {
+            page,
+            limit,
+            total: 0,
+            totalPages: 0,
+          },
+        },
+      })
+    }
+
+    if (hasCheckpointFilter) {
+      query = query.in('checkpoint_id', checkpointIds)
     }
 
     const { data: submissions, count: total, error } = await query

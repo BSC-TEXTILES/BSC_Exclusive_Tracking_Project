@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseServerClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth/session'
+import { createAuditLog } from '@/lib/audit'
+import { getLocalDateString } from '@/lib/utils/date'
 
 export async function POST(
   request: NextRequest,
@@ -26,9 +28,7 @@ export async function POST(
       return NextResponse.json({ success: false, message: 'Module not found' }, { status: 404 })
     }
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const todayStr = today.toISOString().split('T')[0]
+    const todayStr = getLocalDateString()
 
     const { data: moduleCheckpoints } = await supabase
       .from('checkpoints')
@@ -72,17 +72,22 @@ export async function POST(
     }
 
     const now = new Date().toISOString()
-    await supabase
+    const { error: submitError } = await supabase
       .from('checkpoint_submissions')
       .update({ status: 'SUBMITTED', submitted_at: now })
       .in('id', validSubmissions)
 
-    await supabase.from('audit_logs').insert({
-      user_id: user.id,
+    if (submitError) {
+      console.error('Submit all update error:', submitError)
+      return NextResponse.json({ success: false, message: 'Failed to submit' }, { status: 500 })
+    }
+
+    await createAuditLog({
+      userId: user.id,
       action: 'CHECKPOINT_SUBMITTED',
-      entity_type: 'module',
-      entity_id: mod.id,
-      new_values: {
+      entityType: 'module',
+      entityId: mod.id,
+      newValues: {
         submittedCount: validSubmissions.length,
         moduleSlug,
       },

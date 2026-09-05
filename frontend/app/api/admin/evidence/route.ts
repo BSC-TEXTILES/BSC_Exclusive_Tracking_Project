@@ -4,6 +4,7 @@ import path from 'path'
 import { getSupabaseServerClient } from '@/lib/supabase/client'
 import { requireAdmin } from '@/lib/auth/session'
 import { createAuditLog } from '@/lib/audit'
+import { getLocalDateString } from '@/lib/utils/date'
 
 export async function GET(request: NextRequest) {
   try {
@@ -45,10 +46,9 @@ export async function GET(request: NextRequest) {
     }
 
     if (dateStr) {
-      const dateStart = new Date(dateStr).toISOString()
-      const dateEnd = new Date(dateStr)
-      dateEnd.setDate(dateEnd.getDate() + 1)
-      const { data: subIds } = await supabase.from('checkpoint_submissions').select('id').gte('submission_date', dateStart).lt('submission_date', dateEnd.toISOString())
+      const dateStart = getLocalDateString(new Date(dateStr))
+      const dateEnd = getLocalDateString(new Date(new Date(dateStr).getTime() + 864e5))
+      const { data: subIds } = await supabase.from('checkpoint_submissions').select('id').gte('submission_date', dateStart).lt('submission_date', dateEnd)
       if (subIds && subIds.length > 0) {
         query = query.in('submission_id', subIds.map(s => s.id))
       } else {
@@ -161,10 +161,15 @@ export async function DELETE(request: NextRequest) {
       // File may have been removed or moved
     }
 
-    await supabase
+    const { error: deleteError } = await supabase
       .from('evidence_files')
       .delete()
       .eq('id', id)
+
+    if (deleteError) {
+      console.error('Admin evidence DELETE error:', deleteError)
+      return NextResponse.json({ success: false, message: 'Internal error' }, { status: 500 })
+    }
 
     await createAuditLog({
       userId: admin.id,

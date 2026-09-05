@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseServerClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth/session'
+import { getLocalDateString } from '@/lib/utils/date'
 
 export async function GET() {
   try {
@@ -14,9 +15,7 @@ export async function GET() {
 
     const supabase = getSupabaseServerClient()
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const todayStr = today.toISOString()
+    const todayStr = getLocalDateString()
 
     // Get today's assignments for this user
     let { data: assignments } = await supabase

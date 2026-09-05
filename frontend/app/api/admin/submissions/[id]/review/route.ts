@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseServerClient } from '@/lib/supabase/client'
 import { requireAdmin } from '@/lib/auth/session'
 import { createAuditLog } from '@/lib/audit'
+import { safeJson } from '@/lib/utils/parse'
 
 export async function POST(
   request: NextRequest,
@@ -10,7 +11,10 @@ export async function POST(
   try {
     const admin = await requireAdmin()
     const { id } = await params
-    const body = await request.json()
+    const body = await safeJson(request)
+    if (body === null) {
+      return NextResponse.json({ success: false, message: 'Invalid JSON body' }, { status: 400 })
+    }
 
     const { status, comment } = body as { status: string; comment?: string }
 
@@ -53,10 +57,15 @@ export async function POST(
       updateData.rejected_at = now
     }
 
-    await supabase
+    const { error: updateError } = await supabase
       .from('checkpoint_submissions')
       .update(updateData)
       .eq('id', id)
+
+    if (updateError) {
+      console.error('Review submission update error:', updateError)
+      return NextResponse.json({ success: false, message: 'Failed to review submission' }, { status: 500 })
+    }
 
     const cp = submission.checkpoint as unknown as Record<string, unknown> | null
     const mod = cp?.module as unknown as Record<string, unknown> | null

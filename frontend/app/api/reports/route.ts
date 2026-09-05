@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseServerClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth/session'
+import { getLocalDateString } from '@/lib/utils/date'
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,28 +29,70 @@ export async function GET(request: NextRequest) {
       .eq('user_id', user.id)
 
     if (moduleId) {
-      query = query.eq('checkpoint.module_id', moduleId)
+      const { data: cpIds } = await supabase.from('checkpoints').select('id').eq('module_id', moduleId)
+      const ids = (cpIds ?? []).map((c: any) => c.id)
+      if (ids.length === 0) {
+        return NextResponse.json({
+          success: true,
+          data: {
+            user: {
+              id: user.id,
+              fullName: user.fullName,
+              employeeCode: user.employeeCode,
+              email: user.email,
+              role: user.role.name,
+              department: user.department?.name ?? 'Operations',
+            },
+            summary: {
+              totalSubmissions: 0,
+              approved: 0,
+              rejected: 0,
+              pending: 0,
+              drafts: 0,
+              complianceRate: 100,
+              accuracyRate: 100,
+            },
+            moduleBreakdown: [],
+            recentSubmissions: [],
+          },
+        })
+      }
+      query = query.in('checkpoint_id', ids)
     }
 
     const now = new Date()
     if (range === 'today') {
-      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      query = query.gte('submission_date', startOfDay.toISOString().split('T')[0])
+      query = query.gte('submission_date', getLocalDateString())
     } else if (range === 'week') {
       const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-      query = query.gte('submission_date', sevenDaysAgo.toISOString().split('T')[0])
+      query = query.gte('submission_date', getLocalDateString(sevenDaysAgo))
     } else if (range === 'month') {
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-      query = query.gte('submission_date', startOfMonth.toISOString().split('T')[0])
+      query = query.gte('submission_date', getLocalDateString(startOfMonth))
     }
 
-    const { data: submissions } = await query.order('submission_date', { ascending: false })
+    const { data: submissions, error: submissionsError } = await query.order('submission_date', { ascending: false })
+    if (submissionsError) {
+      console.error('Reports submissions error:', submissionsError)
+      return NextResponse.json(
+        { success: false, message: 'Internal error', code: 'INTERNAL_ERROR' },
+        { status: 500 }
+      )
+    }
 
-    const { data: allModules } = await supabase
+    const { data: allModules, error: modulesError } = await supabase
       .from('modules')
       .select('*, checkpoints:checkpoints(id, title)')
       .eq('status', 'ACTIVE')
       .order('display_order', { ascending: true })
+
+    if (modulesError) {
+      console.error('Reports modules error:', modulesError)
+      return NextResponse.json(
+        { success: false, message: 'Internal error', code: 'INTERNAL_ERROR' },
+        { status: 500 }
+      )
+    }
 
     const subs = submissions || []
     const totalSubmissions = subs.length
@@ -152,14 +195,13 @@ export async function POST(request: NextRequest) {
 
     const now = new Date()
     if (range === 'today') {
-      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-      query = query.gte('submission_date', startOfDay.toISOString().split('T')[0])
+      query = query.gte('submission_date', getLocalDateString())
     } else if (range === 'week') {
       const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-      query = query.gte('submission_date', sevenDaysAgo.toISOString().split('T')[0])
+      query = query.gte('submission_date', getLocalDateString(sevenDaysAgo))
     } else if (range === 'month') {
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-      query = query.gte('submission_date', startOfMonth.toISOString().split('T')[0])
+      query = query.gte('submission_date', getLocalDateString(startOfMonth))
     }
 
     const { data: submissions } = await query.order('submission_date', { ascending: false })

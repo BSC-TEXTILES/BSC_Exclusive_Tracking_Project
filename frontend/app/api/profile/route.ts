@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getSupabaseServerClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth/session'
+import { getLocalDateString } from '@/lib/utils/date'
 
 export async function GET() {
   try {
@@ -14,9 +15,8 @@ export async function GET() {
 
     const supabase = getSupabaseServerClient()
 
-    const sevenDaysAgo = new Date()
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+    const sevenDaysAgoStr = getLocalDateString(new Date(Date.now() - 7 * 864e5))
+    const monthStartStr = getLocalDateString(new Date(new Date().getFullYear(), new Date().getMonth(), 1))
 
     const [
       totalSubmissions,
@@ -55,12 +55,12 @@ export async function GET() {
         .from('checkpoint_submissions')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
-        .gte('submission_date', sevenDaysAgo.toISOString()),
+        .gte('submission_date', sevenDaysAgoStr),
       supabase
         .from('checkpoint_submissions')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
-        .gte('submission_date', monthStart.toISOString()),
+        .gte('submission_date', monthStartStr),
     ])
 
     const ts = totalSubmissions.count ?? 0

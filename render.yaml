@@ -3,9 +3,8 @@ services:
     name: bsc-exclusive-tracking
     runtime: node
     plan: free
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    startCommand: npm start
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: cd frontend && npm start
     env:
       - key: NEXT_PUBLIC_SUPABASE_URL
         sync: false

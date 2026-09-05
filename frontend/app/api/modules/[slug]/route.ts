@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseServerClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth/session'
+import { getLocalDateString } from '@/lib/utils/date'
 
 export async function GET(
   request: NextRequest,
@@ -35,9 +36,7 @@ export async function GET(
     const activeCheckpoints = (mod.checkpoints || []).filter((cp: any) => cp.status === 'ACTIVE')
     activeCheckpoints.sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0))
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const todayStr = today.toISOString().split('T')[0]
+    const todayStr = getLocalDateString()
 
     const checkpointIds = activeCheckpoints.map((cp: any) => cp.id)
 

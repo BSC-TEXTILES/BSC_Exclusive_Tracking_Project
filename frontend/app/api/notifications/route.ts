@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseServerClient } from '@/lib/supabase/client'
 import { getCurrentUser } from '@/lib/auth/session'
+import { getLocalDateString } from '@/lib/utils/date'
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,20 +13,15 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const dateParam = searchParams.get('date')
 
-    let dayStart: Date
-    let dayEnd: Date
+    let dayStr: string
+    let nextDayStr: string
 
     if (dateParam) {
-      dayStart = new Date(dateParam)
-      dayStart.setHours(0, 0, 0, 0)
-      dayEnd = new Date(dateParam)
-      dayEnd.setHours(23, 59, 59, 999)
+      dayStr = getLocalDateString(new Date(dateParam))
+      nextDayStr = getLocalDateString(new Date(new Date(dateParam).getTime() + 864e5))
     } else {
-      dayStart = new Date()
-      dayStart.setHours(0, 0, 0, 0)
-      dayEnd = new Date()
-      dayEnd.setDate(dayEnd.getDate() + 7)
-      dayEnd.setHours(23, 59, 59, 999)
+      dayStr = getLocalDateString()
+      nextDayStr = getLocalDateString(new Date(Date.now() + 7 * 864e5))
     }
 
     const supabase = getSupabaseServerClient()
@@ -43,8 +39,8 @@ export async function GET(request: NextRequest) {
         `)
         .eq('user_id', user.id)
         .eq('status', 'ACTIVE')
-        .gte('assigned_date', dayStart.toISOString())
-        .lte('assigned_date', dayEnd.toISOString())
+        .gte('assigned_date', dayStr)
+        .lt('assigned_date', nextDayStr)
         .order('assigned_date', { ascending: true })
         .limit(limit),
       supabase
@@ -57,8 +53,8 @@ export async function GET(request: NextRequest) {
           )
         `)
         .eq('user_id', user.id)
-        .gte('submission_date', dayStart.toISOString())
-        .lte('submission_date', dayEnd.toISOString())
+        .gte('submission_date', dayStr)
+        .lt('submission_date', nextDayStr)
         .order('submission_date', { ascending: false })
         .limit(dateParam ? 20 : 5),
     ])

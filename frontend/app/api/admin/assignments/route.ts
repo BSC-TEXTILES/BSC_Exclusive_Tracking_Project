@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseServerClient } from '@/lib/supabase/client'
 import { requireAdmin } from '@/lib/auth/session'
 import { createAuditLog } from '@/lib/audit'
+import { safeJson } from '@/lib/utils/parse'
 import { z } from 'zod'
 
 const createAssignmentSchema = z.object({
@@ -119,7 +120,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const admin = await requireAdmin()
-    const body = await request.json()
+    const body = await safeJson(request)
+    if (body === null) {
+      return NextResponse.json({ success: false, message: 'Invalid JSON body' }, { status: 400 })
+    }
 
     const parsed = createAssignmentSchema.safeParse(body)
     if (!parsed.success) {
@@ -147,7 +151,7 @@ export async function POST(request: NextRequest) {
           .single()
 
         if (existing) {
-          await supabase
+          const { error: updateError } = await supabase
             .from('checkpoint_assignments')
             .update({
               frequency,
@@ -155,8 +159,12 @@ export async function POST(request: NextRequest) {
               ...(dueDate && { due_date: dueDate }),
             })
             .eq('id', existing.id)
+          if (updateError) {
+            console.error('Assignments POST update error:', updateError)
+            return NextResponse.json({ success: false, message: 'Failed to assign checkpoints' }, { status: 500 })
+          }
         } else {
-          await supabase
+          const { error: insertError } = await supabase
             .from('checkpoint_assignments')
             .insert({
               user_id: userId,
@@ -166,6 +174,10 @@ export async function POST(request: NextRequest) {
               frequency,
               status: 'ACTIVE',
             })
+          if (insertError) {
+            console.error('Assignments POST insert error:', insertError)
+            return NextResponse.json({ success: false, message: 'Failed to assign checkpoints' }, { status: 500 })
+          }
         }
         createdCount++
       }
@@ -215,10 +227,15 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Assignment not found' }, { status: 404 })
     }
 
-    await supabase
+    const { error: deleteError } = await supabase
       .from('checkpoint_assignments')
       .delete()
       .eq('id', id)
+
+    if (deleteError) {
+      console.error('Assignments DELETE error:', deleteError)
+      return NextResponse.json({ success: false, message: 'Internal error' }, { status: 500 })
+    }
 
     await createAuditLog({
       userId: admin.id,

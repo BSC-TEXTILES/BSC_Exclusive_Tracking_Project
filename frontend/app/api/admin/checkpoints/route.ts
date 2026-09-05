@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseServerClient } from '@/lib/supabase/client'
-import { getCurrentUser } from '@/lib/auth/session'
+import { requireAdmin } from '@/lib/auth/session'
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser()
-    if (!user) {
-      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 })
-    }
+    await requireAdmin()
 
     const supabase = await getSupabaseServerClient()
 
@@ -55,6 +52,9 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
+    if (error instanceof Error && (error.message === 'UNAUTHORIZED' || error.message === 'FORBIDDEN')) {
+      return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 })
+    }
     console.error('Admin checkpoints GET error:', error)
     return NextResponse.json({ success: false, message: 'Internal error' }, { status: 500 })
   }

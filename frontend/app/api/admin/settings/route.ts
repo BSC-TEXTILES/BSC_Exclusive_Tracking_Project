@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseServerClient } from '@/lib/supabase/client'
 import { requireAdmin } from '@/lib/auth/session'
 import { createAuditLog } from '@/lib/audit'
+import { safeJson } from '@/lib/utils/parse'
 
 export async function GET() {
   try {
@@ -46,7 +47,10 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const admin = await requireAdmin()
-    const body = await request.json()
+    const body = await safeJson(request)
+    if (body === null) {
+      return NextResponse.json({ success: false, message: 'Invalid JSON body' }, { status: 400 })
+    }
 
     const { settings } = body as { settings: Array<{ key: string; value: string }> }
 

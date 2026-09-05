@@ -4,10 +4,14 @@ import { verifyPassword } from '@/lib/auth/password'
 import { createSession } from '@/lib/auth/session'
 import { createAuditLog } from '@/lib/audit'
 import { loginSchema } from '@/lib/validations/schemas'
+import { safeJson } from '@/lib/utils/parse'
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    const body = await safeJson(request)
+    if (body === null) {
+      return NextResponse.json({ success: false, message: 'Invalid JSON body' }, { status: 400 })
+    }
 
     const parsed = loginSchema.safeParse(body)
     if (!parsed.success) {
@@ -19,6 +23,7 @@ export async function POST(request: NextRequest) {
 
     const { username, password } = parsed.data
     const trimmedUsername = username.trim()
+    const safeIdentifier = (trimmedUsername || '').replace(/[,()%*.']/g, '')
 
     const supabase = getSupabaseServerClient()
 
@@ -26,7 +31,7 @@ export async function POST(request: NextRequest) {
     const { data: users, error: queryError } = await supabase
       .from('users')
       .select('*, role:roles(*)')
-      .or(`username.eq.${trimmedUsername},email.eq.${trimmedUsername}`)
+      .or(`username.eq.${safeIdentifier},email.eq.${safeIdentifier}`)
       .limit(1)
 
     if (queryError) {

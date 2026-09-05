@@ -3,6 +3,7 @@ import { getSupabaseServerClient } from '@/lib/supabase/client'
 import { requireAdmin } from '@/lib/auth/session'
 import { createAuditLog } from '@/lib/audit'
 import { hashPassword } from '@/lib/auth/password'
+import { safeJson } from '@/lib/utils/parse'
 
 // GET single user
 export async function GET(
@@ -65,7 +66,10 @@ export async function PATCH(
     const admin = await requireAdmin()
     const { id } = await params
     const supabase = getSupabaseServerClient()
-    const body = await request.json()
+    const body = (await safeJson(request)) as Record<string, any> | null
+    if (body === null) {
+      return NextResponse.json({ success: false, message: 'Invalid JSON body' }, { status: 400 })
+    }
 
     const { data: existingUser, error: fetchError } = await supabase
       .from('users')

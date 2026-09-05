@@ -3,7 +3,7 @@ import { cookies } from 'next/headers'
 import { getSupabaseServerClient } from '@/lib/supabase/client'
 
 const SESSION_COOKIE_NAME = 'session_token'
-const SESSION_MAX_AGE = 60 * 60 * 24 * 7
+const SESSION_MAX_AGE = 60 * 60 * 24 * 7 // 7 days in seconds
 
 function getSecretKey() {
   const secret = process.env.SESSION_SECRET
@@ -86,6 +86,10 @@ export async function getSession() {
 
     const enrichedUser = {
       ...user,
+      fullName: user.full_name,
+      employeeCode: user.employee_code,
+      departmentId: user.department_id,
+      roleId: user.role_id,
       role: {
         ...user.role,
         rolePermissions: rolePermissions || [],

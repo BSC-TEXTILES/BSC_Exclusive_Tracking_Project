@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseServerClient } from '@/lib/supabase/client'
 import { requireAdmin } from '@/lib/auth/session'
 import { createAuditLog } from '@/lib/audit'
+import { safeJson } from '@/lib/utils/parse'
 
 export async function POST(request: NextRequest) {
   try {
     const admin = await requireAdmin()
-    const body = await request.json()
+    const body = (await safeJson(request)) as { roleId?: string; permissionName?: string; enabled?: boolean } | null
+    if (body === null) {
+      return NextResponse.json({ success: false, message: 'Invalid JSON body' }, { status: 400 })
+    }
     const { roleId, permissionName, enabled } = body
 
     if (!roleId || !permissionName || typeof enabled !== 'boolean') {

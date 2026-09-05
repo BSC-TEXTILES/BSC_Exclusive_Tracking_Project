@@ -3,6 +3,7 @@ import { getSupabaseServerClient } from '@/lib/supabase/client'
 import { getCurrentUser, requireAdmin } from '@/lib/auth/session'
 import { createAuditLog } from '@/lib/audit'
 import { checkpointSchema } from '@/lib/validations/schemas'
+import { safeJson } from '@/lib/utils/parse'
 
 export async function GET(
   request: NextRequest,
@@ -69,7 +70,10 @@ export async function POST(
     const { id } = await params
     const moduleId = id
     const supabase = getSupabaseServerClient()
-    const body = await request.json()
+    const body = await safeJson(request)
+    if (body === null) {
+      return NextResponse.json({ success: false, message: 'Invalid JSON body' }, { status: 400 })
+    }
 
     const { data: mod, error: modError } = await supabase
       .from('modules')
