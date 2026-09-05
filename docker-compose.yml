@@ -1,0 +1,70 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: supabase/postgres:15.1.1.78
+    container_name: bsc_postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/supabase/migrations/001_initial_schema.sql:/docker-entrypoint-initdb.d/001_initial_schema.sql
+      - ./database/supabase/migrations/002_supervisor_system.sql:/docker-entrypoint-initdb.d/002_supervisor_system.sql
+      - ./database/supabase/seed.sql:/docker-entrypoint-initdb.d/003_seed.sql
+    environment:
+      POSTGRES_DB: bsc_exclusive
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  supabase-studio:
+    image: supabase/studio:latest
+    container_name: bsc_studio
+    ports:
+      - "3001:3000"
+    environment:
+      STUDIO_PG_META_URL: http://postgres:8080
+      SUPABASE_URL: http://localhost:8000
+      SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  supabase-kong:
+    image: supabase/kong:latest
+    container_name: bsc_kong
+    ports:
+      - "8000:8000"
+      - "8443:8443"
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
+    volumes:
+      - ./database/supabase/config.yml:/etc/kong/kong.yml
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bsc_app
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/bsc_exclusive
+      SUPABASE_URL: http://localhost:8000
+      SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+      JWT_SECRET: your-local-jwt-secret-change-in-production
+      NODE_ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./uploads:/app/uploads
+
+volumes:
+  postgres_data:
