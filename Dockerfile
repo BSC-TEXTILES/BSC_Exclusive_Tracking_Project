@@ -15,6 +15,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY frontend .
 
+# Copy .env for build-time NEXT_PUBLIC_ vars
+COPY frontend/.env .env
+
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build
@@ -38,6 +41,9 @@ RUN chown nextjs:nodejs .next
 # Automatically leverage output traces to reduce image size
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Copy uploads directory
+COPY --from=builder /app/uploads ./uploads
 
 USER nextjs
 

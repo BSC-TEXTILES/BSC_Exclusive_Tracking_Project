@@ -1,17 +1,20 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "buildCommand": "npx prisma generate && next build",
+  "rootDirectory": "frontend",
+  "buildCommand": "npm run build",
   "installCommand": "npm install",
   "outputDirectory": ".next",
   "env": {
-    "DATABASE_URL": "@database-url",
-    "SUPABASE_URL": "@supabase-url",
-    "SUPABASE_ANON_KEY": "@supabase-anon-key",
+    "NEXT_PUBLIC_SUPABASE_URL": "@next-public-supabase-url",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@next-public-supabase-anon-key",
     "SUPABASE_SERVICE_ROLE_KEY": "@supabase-service-role-key",
-    "JWT_SECRET": "@jwt-secret",
-    "NEXTAUTH_URL": "@nextauth-url",
-    "UPLOAD_DIR": "/tmp/uploads"
+    "SESSION_SECRET": "@session-secret",
+    "NEXT_PUBLIC_APP_NAME": "BSC Exclusive",
+    "NEXT_PUBLIC_APP_TIMEZONE": "Asia/Kolkata",
+    "FILE_STORAGE_TYPE": "local",
+    "UPLOAD_DIR": "/tmp/uploads",
+    "MAX_FILE_SIZE_MB": "10"
   },
   "headers": [
     {

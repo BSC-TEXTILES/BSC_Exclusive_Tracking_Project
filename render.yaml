@@ -1,43 +1,32 @@
 services:
   - type: web
-    name: bsc-exclusive-api
+    name: bsc-exclusive-tracking
     runtime: node
     plan: free
-    buildCommand: npm install && npx prisma generate
-    startCommand: node node_modules/.next/standalone/server.js
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
     env:
-      - key: DATABASE_URL
+      - key: NEXT_PUBLIC_SUPABASE_URL
         sync: false
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_ANON_KEY
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
-      - key: JWT_SECRET
+      - key: SESSION_SECRET
         sync: false
       - key: NODE_ENV
         value: production
+      - key: NEXT_PUBLIC_APP_NAME
+        value: "BSC Exclusive"
+      - key: NEXT_PUBLIC_APP_TIMEZONE
+        value: "Asia/Kolkata"
+      - key: FILE_STORAGE_TYPE
+        value: "local"
+      - key: UPLOAD_DIR
+        value: "./uploads"
+      - key: MAX_FILE_SIZE_MB
+        value: "10"
     healthCheckPath: /api/health
-    autoDeploy: true
-    branch: main
-
-  - type: worker
-    name: bsc-exclusive-worker
-    runtime: node
-    plan: free
-    buildCommand: npm install && npx prisma generate
-    startCommand: npx tsx backend/workers/cron-worker.ts
-    env:
-      - key: DATABASE_URL
-        sync: false
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      - key: JWT_SECRET
-        sync: false
-      - key: NODE_ENV
-        value: production
     autoDeploy: true
     branch: main
