@@ -1,0 +1,445 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --color-primary: #0ea5e9;
+  --color-primary-dark: #0284c7;
+  --color-primary-deep: #0369a1;
+  --color-primary-light: #e0f2fe;
+  --color-primary-faint: #f0f9ff;
+
+  --color-success: #16a34a;
+  --color-success-bg: #dcfce7;
+  --color-warning: #d97706;
+  --color-warning-bg: #fef3c7;
+  --color-danger: #dc2626;
+  --color-danger-bg: #fee2e2;
+  --color-info: #0284c7;
+  --color-info-bg: #e0f2fe;
+
+  --color-surface: #ffffff;
+  --color-surface-alt: #f8fafc;
+  --color-background: #f8fafc;
+  --color-border: #e2e8f0;
+  --color-border-light: #f1f5f9;
+  --color-text: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748b;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+html {
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--color-background);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-timing-function: ease;
+  transition-duration: 0s;
+}
+
+html.dark *,
+html.dark *::before,
+html.dark *::after {
+  transition-duration: 0.35s;
+}
+
+/* ── Dark Mode ────────────────────────────────────────────── */
+html.dark {
+  --color-primary: #38bdf8;
+  --color-primary-dark: #0ea5e9;
+  --color-primary-deep: #0284c7;
+  --color-primary-light: #1e3a5f;
+  --color-primary-faint: #0f172a;
+
+  --color-success: #22c55e;
+  --color-success-bg: #052e16;
+  --color-warning: #f59e0b;
+  --color-warning-bg: #451a03;
+  --color-danger: #ef4444;
+  --color-danger-bg: #450a0a;
+  --color-info: #38bdf8;
+  --color-info-bg: #0c4a6e;
+
+  --color-surface: #1e293b;
+  --color-surface-alt: #0f172a;
+  --color-background: #0b1120;
+  --color-border: #1e293b;
+  --color-border-light: #1e293b;
+  --color-text: #f1f5f9;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+}
+
+/* ── Universal Premium Floating Scrollbar System ───────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.45) transparent;
+}
+
+html.dark * {
+  scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
+  border: 1.5px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(14, 165, 233, 0.85);
+}
+
+html.dark ::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.28);
+  border-radius: 9999px;
+  border: 1.5px solid transparent;
+  background-clip: padding-box;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(56, 189, 248, 0.75);
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.35);
+  border-radius: 9999px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(14, 165, 233, 0.8);
+}
+
+html.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+html.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(56, 189, 248, 0.7);
+}
+
+.scrollbar-none,
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* ------------------------------------------------------------
+   Custom hover tooltips
+   Long tooltip text scrolls INSIDE the tooltip — the page itself
+   never scrolls when the cursor hovers an element.
+------------------------------------------------------------ */
+[data-tip] { position: relative; }
+[data-tip]::after,
+[data-tip]::before {
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease 0.2s;
+}
+[data-tip]:hover::after,
+[data-tip]:hover::before,
+[data-tip]:focus-visible::after,
+[data-tip]:focus-visible::before {
+  opacity: 1;
+}
+[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  z-index: 90;
+  width: max-content;
+  max-width: 300px;
+  max-height: 140px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #f8fafc;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: left;
+  white-space: normal;
+  word-break: break-word;
+  box-shadow: 0 10px 28px rgba(2, 6, 23, 0.45);
+}
+/* Placement below the element (safe inside the fixed header) */
+[data-tip].tip-bottom::after { top: calc(100% + 8px); left: 50%; transform: translateX(-50%); }
+[data-tip].tip-bottom::before {
+  content: '';
+  position: absolute;
+  z-index: 90;
+  top: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-bottom-color: #0f172a;
+}
+/* Placement to the right of the element (collapsed sidebar) */
+[data-tip].tip-right::after { left: calc(100% + 10px); top: 50%; transform: translateY(-50%); }
+[data-tip].tip-right::before {
+  content: '';
+  position: absolute;
+  z-index: 90;
+  left: calc(100% + 4px);
+  top: 50%;
+  transform: translateY(-50%);
+  border: 6px solid transparent;
+  border-right-color: #0f172a;
+}
+
+/* Card */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.875rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+html.dark .card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: 0.6rem;
+  font-size: 0.813rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn-primary {
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.25);
+}
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
+  transform: translateY(-1px);
+}
+.btn-primary:active:not(:disabled) { transform: translateY(0); }
+.btn-outline {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text-secondary);
+}
+.btn-outline:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-faint);
+}
+.btn-danger { background: var(--color-danger); color: #fff; }
+.btn-danger:hover:not(:disabled) { opacity: 0.9; }
+.btn-ghost { background: transparent; color: var(--color-text-secondary); }
+.btn-ghost:hover:not(:disabled) { background: var(--color-primary-faint); color: var(--color-primary); }
+.btn-sm { padding: 0.35rem 0.7rem; font-size: 0.75rem; }
+
+/* Inputs */
+.input {
+  width: 100%;
+  border: 1.5px solid var(--color-border);
+  border-radius: 0.6rem;
+  padding: 0.55rem 0.8rem;
+  font-size: 0.875rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  outline: none;
+  transition: all 0.2s ease;
+}
+.input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12);
+}
+.input::placeholder { color: var(--color-text-muted); }
+select.input { appearance: auto; }
+
+/* Labels */
+.label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: 0.35rem;
+}
+
+/* Tables */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.813rem;
+}
+.table th {
+  text-align: left;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  background: var(--color-surface-alt);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+.table td {
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid var(--color-border-light);
+  vertical-align: middle;
+  color: var(--color-text);
+}
+.table tbody tr { transition: background 0.15s ease; }
+.table tbody tr:hover { background: var(--color-primary-faint); }
+
+/* Page header */
+.page-header {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);
+  padding: 1.25rem 1.5rem;
+  border-radius: 0 0 1rem 1rem;
+  margin: -1.5rem -1.5rem 1.5rem;
+}
+.page-header h1 { color: #fff; font-size: 1.25rem; font-weight: 700; }
+.page-header p { color: rgba(255,255,255,0.75); font-size: 0.8rem; margin-top: 0.15rem; }
+
+/* Animations */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.animate-fade-in { animation: fadeInUp 0.3s ease both; }
+.animate-fade-in-fast { animation: fadeIn 0.2s ease both; }
+.animate-slide-in { animation: slideInRight 0.25s ease both; }
+
+/* Leaflet */
+.leaflet-container { width: 100%; height: 100%; border-radius: 0.75rem; z-index: 0; }
+
+/* Sidebar transition */
+aside {
+  will-change: width, transform;
+}
+
+/* ── Dark mode global overrides ───────────────────────────── */
+html.dark body { background: #0b1120; }
+
+/* Fix hardcoded white backgrounds */
+html.dark .bg-white { background-color: #1e293b !important; }
+html.dark .bg-white\/80 { background-color: rgba(30, 41, 59, 0.8) !important; }
+html.dark .bg-white\/90 { background-color: rgba(30, 41, 59, 0.9) !important; }
+
+/* Fix hardcoded gray-50 backgrounds */
+html.dark .bg-gray-50 { background-color: #0f1729 !important; }
+html.dark .bg-slate-50 { background-color: #0f1729 !important; }
+html.dark .bg-slate-50\/50 { background-color: rgba(15, 23, 41, 0.5) !important; }
+
+/* Fix hardcoded text colors */
+html.dark .text-gray-900 { color: #f1f5f9 !important; }
+html.dark .text-gray-800 { color: #e2e8f0 !important; }
+html.dark .text-gray-700 { color: #cbd5e1 !important; }
+html.dark .text-slate-900 { color: #f1f5f9 !important; }
+html.dark .text-slate-800 { color: #e2e8f0 !important; }
+html.dark .text-slate-700 { color: #cbd5e1 !important; }
+
+/* Fix hardcoded border colors */
+html.dark .border-gray-200 { border-color: #1e293b !important; }
+html.dark .border-gray-100 { border-color: #1e293b !important; }
+html.dark .border-slate-200 { border-color: #1e293b !important; }
+html.dark .border-slate-100 { border-color: #1e293b !important; }
+html.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) { border-color: #1e293b !important; }
+html.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-color: #1e293b !important; }
+
+/* Fix header specifically */
+html.dark header.bg-white { background-color: #0b1120 !important; }
+
+/* Fix footer */
+html.dark footer { background: #060a14 !important; }
+html.dark footer.bg-gray-900 { background: #060a14 !important; }
+
+/* Fix sidebar gradient */
+html.dark aside { background: linear-gradient(to bottom, #0b1120, #0f172a, #1e293b) !important; }
+
+/* Fix modal backgrounds */
+html.dark .fixed.inset-0 { color-scheme: dark; }
+
+/* Fix notification dropdown */
+html.dark .bg-slate-50 { background-color: #1e293b !important; }
+html.dark .bg-gradient-to-r { background: linear-gradient(to right, #0f172a, #1e293b) !important; }
+
+/* Fix specific hardcoded elements in AppShell */
+html.dark .bg-gradient-to-br.from-sky-500.to-blue-700 { background: linear-gradient(to bottom right, #0369a1, #1e40af) !important; }
+
+/* Session timeout banner */
+.session-timeout-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 99999;
+  background: #dc2626;
+  color: white;
+  text-align: center;
+  padding: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}

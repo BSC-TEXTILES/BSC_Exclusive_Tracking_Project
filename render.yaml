@@ -1,31 +1,36 @@
+# Render Blueprint — Backend Web Service
 services:
   - type: web
-    name: bsc-exclusive-tracking
+    name: bsc-exclusive-tracking-api
     runtime: node
+    rootDir: backend
     plan: free
-    buildCommand: cd frontend && npm install && npm run build
-    startCommand: cd frontend && npm start
-    env:
-      - key: NEXT_PUBLIC_SUPABASE_URL
-        sync: false
-      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
-        sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      - key: SESSION_SECRET
-        sync: false
-      - key: NODE_ENV
-        value: production
-      - key: NEXT_PUBLIC_APP_NAME
-        value: "BSC Exclusive"
-      - key: NEXT_PUBLIC_APP_TIMEZONE
-        value: "Asia/Kolkata"
-      - key: FILE_STORAGE_TYPE
-        value: "local"
-      - key: UPLOAD_DIR
-        value: "./uploads"
-      - key: MAX_FILE_SIZE_MB
-        value: "10"
+    buildCommand: npm install && npm run build
+    startCommand: node dist/server.js
     healthCheckPath: /api/health
     autoDeploy: true
-    branch: main
+    envVars:
+      - key: NODE_VERSION
+        value: 18.17.0
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        value: postgresql://postgres.xxnsbcegefhjdfojybrl:Gagan%402002%402026@aws-0-ap-south-1.pooler.supabase.com:6543/postgres
+      - key: DB_SSL
+        value: "true"
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        value: https://bsc-v1-seven.vercel.app
+      - key: FILE_STORAGE_TYPE
+        value: supabase
+      - key: SUPABASE_URL
+        value: https://xxnsbcegefhjdfojybrl.supabase.co
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4bnNiY2VnZWZoamRmb2p5YnJsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4ODYyOTc0NywiZXhwIjoyMTA0MjA1NzQ3fQ.43im7dAvcmPrR9ZArAUQLoptA7zahw3McSV2HBKrbm8
+      - key: SUPABASE_BUCKET
+        value: evidence
+      - key: AUTO_APPROVE_HOURS
+        value: "1"
+      - key: MAX_FILE_SIZE_MB
+        value: "25"

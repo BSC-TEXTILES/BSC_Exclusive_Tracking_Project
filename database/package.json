@@ -1,0 +1,15 @@
+{
+  "name": "bsc-exclusive-tracking-database",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Database setup & seed for BSC Exclusive Tracking (PostgreSQL / Supabase)",
+  "scripts": {
+    "init": "node init.mjs"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "dotenv": "^16.4.5",
+    "pg": "^8.13.1"
+  }
+}

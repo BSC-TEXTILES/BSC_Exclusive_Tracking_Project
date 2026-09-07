@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <rect width="48" height="48" rx="10" fill="url(#grad)"/>
+  <defs>
+    <linearGradient id="grad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+  </defs>
+  <path d="M14 12h6v24h-6zM20 12h6l4 10 4-10h6l-7 14 8 12h-6l-5-8-5 8h-6l8-12z" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0"/>
+  <text x="24" y="28" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="18" fill="#fff">BSC</text>
+</svg>

@@ -1,0 +1,22 @@
+# Robots.txt for BSC Exclusive Tracking Platform
+# https://bsc-v1-seven.vercel.app
+
+User-agent: *
+Allow: /
+
+# Disallow private routes
+Disallow: /login
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /chat
+Disallow: /admin
+Disallow: /supervisor
+Disallow: /my-evidence
+Disallow: /my-stops
+Disallow: /process
+Disallow: /checkpoints
+Disallow: /module/:id
+Disallow: /reports
+
+# Sitemap location
+Sitemap: https://bsc-v1-seven.vercel.app/sitemap.xml
